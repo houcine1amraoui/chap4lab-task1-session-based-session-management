@@ -40,9 +40,13 @@ app.get("/posts", cookieAuth, async (req, res) => {
 // user should authenticate
 app.post("/posts", cookieAuth, async (req, res) => {
   const { title, username } = req.body;
-  const newPost = { title, author: username };
-  posts.push(newPost);
-  res.json(newPost);
+  if (title && username) {
+    const newPost = { title, author: username };
+    posts.push(newPost);
+    res.json(newPost);
+  } else {
+    res.send("Both username and title are required");
+  }
 });
 
 // user logs in only one time
@@ -70,6 +74,10 @@ app.post("/login", (req, res) => {
 });
 
 function cookieAuth(req, res, next) {
+  const authHeader = req.headers.cookie;
+  if (!authHeader) {
+    return res.send("Unauthorized");
+  }
   const sessionId = req.headers.cookie.split("=")[1];
   const userSession = sessions[sessionId];
   if (!userSession) {
