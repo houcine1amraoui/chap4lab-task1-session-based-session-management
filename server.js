@@ -4,37 +4,81 @@ import { v4 as uuidv4 } from "uuid";
 const app = express();
 app.use(express.json());
 
+let users = [
+  {
+    username: "mohamed-msila",
+    password: "mohamed2024",
+  },
+  {
+    username: "amina-msila",
+    password: "amina2024",
+  },
+];
+
+let posts = [
+  {
+    title: "Post 1",
+    author: "mohamed-msila",
+  },
+  {
+    title: "Post 2",
+    author: "amina-msila",
+  },
+];
+
 const sessions = {};
 
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  if (username !== "admin" || password !== "admin") {
-    return res.status(401).send("Invalid username or password");
-  }
-  const sessionId = uuidv4();
-  sessions[sessionId] = { username, userId: 1 };
-  console.log(sessions);
-  res.set("Set-Cookie", `session=${sessionId}`);
-  res.send("success");
+// get post of a specific user
+// user should authenticate
+// then authorization is performed based on username
+app.get("/posts", cookieAuth, async (req, res) => {
+  const username = req.body.username;
+  res.json(posts.filter((post) => post.author === username));
 });
 
-app.get("/course", (req, res) => {
+// create a post by a specific user
+// user should authenticate
+app.post("/posts", cookieAuth, async (req, res) => {
+  const { title, username } = req.body;
+  const newPost = { title, author: username };
+  posts.push(newPost);
+  res.json(newPost);
+});
+
+// user logs in only one time
+// then authentication is done using cookies
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username && password) {
+    const result = users.filter((user) => {
+      return user.username === username;
+    });
+    if (result.length > 0) {
+      if (result[0].password === password) {
+        const sessionId = uuidv4();
+        sessions[sessionId] = { username, userId: 1 };
+        console.log(sessions);
+        res.set("Set-Cookie", `session=${sessionId}`);
+        res.send("success");
+      } else {
+        return res.send("Invalid username or password");
+      }
+    }
+  } else {
+    return res.send("Both username and password are required");
+  }
+});
+
+function cookieAuth(req, res, next) {
   const sessionId = req.headers.cookie.split("=")[1];
   const userSession = sessions[sessionId];
   if (!userSession) {
     return res.status(401).send("Invalid session");
   }
-  const userId = userSession.userId;
-  return res.send([
-    {
-      id: 1,
-      title: "title",
-      userId,
-    },
-  ]);
-});
+  next();
+}
 
-const PORT = 1000;
+const PORT = 2000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
