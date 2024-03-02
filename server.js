@@ -1,8 +1,9 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
-
+import cookieParser from "cookie-parser";
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 let users = [
   {
@@ -49,6 +50,14 @@ app.post("/posts", cookieAuth, async (req, res) => {
   }
 });
 
+app.get("/cookie", async (req, res) => {
+  res.cookie("test session", "test session", {
+    // secure: true,
+    // httpOnly: true,
+  });
+  res.send("cookie");
+});
+
 // user logs in only one time
 // then authentication is done using cookies
 app.post("/login", (req, res) => {
@@ -62,7 +71,13 @@ app.post("/login", (req, res) => {
         const sessionId = uuidv4();
         sessions[sessionId] = { username, userId: 1 };
         console.log(sessions);
-        res.set("Set-Cookie", `session=${sessionId}`);
+        // res.set(
+        //   "Set-Cookie",
+        //   `session=${sessionId}; domain=example.com; expire : new Date() + 99; httponly=true; secure=true`
+        // );
+        res.cookie("session", sessionId, {
+          secure: true,
+        });
         res.send("success");
       } else {
         return res.send("Invalid username or password");
@@ -74,11 +89,14 @@ app.post("/login", (req, res) => {
 });
 
 function cookieAuth(req, res, next) {
-  const authHeader = req.headers.cookie;
-  if (!authHeader) {
+  // const cookies = req.headers.cookie;
+  const cookies = req.cookies;
+  if (!cookies) {
     return res.send("Unauthorized");
   }
-  const sessionId = req.headers.cookie.split("=")[1];
+  // const sessionId = req.headers.cookie.split("=")[1];
+  const sessionId = cookies.session;
+  // console.log("session:::", sessionId);
   const userSession = sessions[sessionId];
   if (!userSession) {
     return res.status(401).send("Invalid session");
