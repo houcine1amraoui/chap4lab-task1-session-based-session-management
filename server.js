@@ -52,8 +52,12 @@ app.post("/posts", cookieAuth, async (req, res) => {
 
 app.get("/cookie", async (req, res) => {
   res.cookie("test session", "test session", {
+    // domain: "www.example.com",
     // secure: true,
     // httpOnly: true,
+    // path: "/login",
+    // expires: new Date(Date.now() + 1000 * 60 * 5),
+    // maxAge: 1000 * 60 * 1,
   });
   res.send("cookie");
 });
@@ -76,7 +80,8 @@ app.post("/login", (req, res) => {
         //   `session=${sessionId}; domain=example.com; expire : new Date() + 99; httponly=true; secure=true`
         // );
         res.cookie("session", sessionId, {
-          secure: true,
+          // Abosulte Timeout
+          // maxAge: 3000,
         });
         res.send("success");
       } else {
