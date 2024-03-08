@@ -1,4 +1,4 @@
-# cookie-based-session-management-demo
+# Chapter 4 Lab - Task 1: Session-based Session Management
 
 ## Project Preparation
 
