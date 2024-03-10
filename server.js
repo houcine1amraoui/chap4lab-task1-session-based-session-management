@@ -27,8 +27,6 @@ let posts = [
   },
 ];
 
-const sessions = {};
-
 // get post of a specific user
 // user should authenticate
 // then authorization is performed based on username
@@ -50,61 +48,43 @@ app.post("/posts", cookieAuth, async (req, res) => {
   }
 });
 
-app.get("/cookie", async (req, res) => {
-  res.cookie("test session", "test session", {
-    // domain: "www.example.com",
-    // secure: true,
-    // httpOnly: true,
-    // path: "/login",
-    // expires: new Date(Date.now() + 1000 * 60 * 5),
-    // maxAge: 1000 * 60 * 1,
-  });
-  res.send("cookie");
-});
-
+let sessions = [];
 // user logs in only one time
 // then authentication is done using cookies
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
-  if (username && password) {
-    const result = users.filter((user) => {
-      return user.username === username;
-    });
-    if (result.length > 0) {
-      if (result[0].password === password) {
-        const sessionId = uuidv4();
-        sessions[sessionId] = { username, userId: 1 };
-        console.log(sessions);
-        // res.set(
-        //   "Set-Cookie",
-        //   `session=${sessionId}; domain=example.com; expire : new Date() + 99; httponly=true; secure=true`
-        // );
-        res.cookie("session", sessionId, {
-          // Abosulte Timeout
-          // maxAge: 3000,
-        });
-        res.send("success");
-      } else {
-        return res.send("Invalid username or password");
-      }
-    }
-  } else {
+  // Check username and password value existence
+  if (!username || !password) {
     return res.send("Both username and password are required");
   }
+  // Check user existence
+  const exist = users.find((user) => user.username === username);
+  if (!exist) {
+    return res.send("Invalid username or password");
+  }
+  // Check password matching
+  if (exist.password !== password) {
+    return res.send("Invalid username or password");
+  }
+  const sessionId = uuidv4();
+  sessions.push({ sessionId, username });
+  res.cookie("session", sessionId, {
+    maxAge: 5000,
+  });
+  res.send("You have successfully logged in");
 });
 
 function cookieAuth(req, res, next) {
-  // const cookies = req.headers.cookie;
   const cookies = req.cookies;
   if (!cookies) {
-    return res.send("Unauthorized");
+    return res.status(401).send("Unauthenticated");
   }
-  // const sessionId = req.headers.cookie.split("=")[1];
   const sessionId = cookies.session;
-  // console.log("session:::", sessionId);
-  const userSession = sessions[sessionId];
+  const userSession = sessions.find(
+    (session) => session.sessionId === sessionId
+  );
   if (!userSession) {
-    return res.status(401).send("Invalid session");
+    return res.status(401).send("Unauthenticated");
   }
   next();
 }
