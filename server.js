@@ -39,13 +39,12 @@ app.get("/posts", cookieAuth, async (req, res) => {
 // user should authenticate
 app.post("/posts", cookieAuth, async (req, res) => {
   const { title, username } = req.body;
-  if (title && username) {
-    const newPost = { title, author: username };
-    posts.push(newPost);
-    res.json(newPost);
-  } else {
-    res.send("Both username and title are required");
+  if (!username || !title) {
+    return res.send("Both username and title are required");
   }
+  const newPost = { title, author: username };
+  posts.push(newPost);
+  res.send("Post created successfully");
 });
 
 let sessions = [];
@@ -66,10 +65,12 @@ app.post("/login", (req, res) => {
   if (exist.password !== password) {
     return res.send("Invalid username or password");
   }
+
   const sessionId = uuidv4();
-  sessions.push({ sessionId, username });
+  const newSession = { sessionId, username };
+  sessions.push(newSession);
   res.cookie("session", sessionId, {
-    maxAge: 5000,
+    // maxAge: 5000,
   });
   res.send("You have successfully logged in");
 });
@@ -89,7 +90,7 @@ function cookieAuth(req, res, next) {
   next();
 }
 
-const PORT = 2000;
+const PORT = 1000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
