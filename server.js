@@ -31,13 +31,15 @@ let posts = [
 // user should authenticate
 // then authorization is performed based on username
 app.get("/posts", cookieAuth, async (req, res) => {
-  const username = req.body.username;
+  // const username = req.username;
+  const { username } = req.body;
   res.json(posts.filter((post) => post.author === username));
 });
 
 // create a post by a specific user
 // user should authenticate
 app.post("/posts", cookieAuth, async (req, res) => {
+  // const username = req.username;
   const { title, username } = req.body;
   if (!username || !title) {
     return res.send("Both username and title are required");
@@ -87,6 +89,7 @@ function cookieAuth(req, res, next) {
   if (!userSession) {
     return res.status(401).send("Unauthenticated");
   }
+  req.username = userSession.username;
   next();
 }
 
